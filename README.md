@@ -237,3 +237,44 @@ def get_students_oldies():
             return response("No students at and over the age of 30")        
 ````
 
+## ΕΡΩΤΗΜΑ 6: Επιστροφή φοιτητή που έχει δηλώσει κατοικία βάσει email 
+
+> Το συγκεκριμένο endpoint δέχεται ως input το email ενός μαθητή και εμφανίζει τα στοιχεία της κατοικίας του, εφόσον τα έχει δηλώσει. Εκτελείται με μια εντολή curl της μορφής:
+````bash
+curl -X GET localhost:5000/getStudentAddress -d '{"email":"hebertvazquez@ontagene.com"}'  -H "Authorization: 5163b7ec-b400-11eb-9257-0800273bc3c2"  -H Content-Type:application/json
+````
+> Στην αρχή ελέγχεται το input που έχει δωθεί και αυθεντικοποιείται ο χρήστης. Στη συνέχεια εκτελείται το query **find_one** με το email που δωθηκε απο τον χρηστη και ταυτοχρονα το πεδίο address να μην ισούται με **"None"**. To αποτέλεσμα περνάει στη μεταβλητή student και ελέχεται μετά αν δεν είναι κενή. Αν είναι τοτε εμφανίζεται το μήνυμα *"No student with that email and a declared address"*, ενω στη περίπτωση που δεν είναι, τότε κρατάμε στο student μόνο το πεδίο με το όνομα του και απο το dictionary με το *address* κρατάμε το *street* και το *postcode*. Τέλος εμφανίζεται το αποτέλσμα στον χρήστη σε μορφή json. 
+````json
+{
+    "name": "Hebert Vazquez",
+    "street": "Woodside Avenue",
+    "postcode": 14943
+}  
+````
+**Κώδικας**
+````python
+@app.route('/getStudentAddress', methods=['GET'])
+def get_student_address():
+    # Request JSON data
+    data = None 
+    try:
+        data = json.loads(request.data)
+    except Exception as e:
+        return Response("bad json content",status=500,mimetype='application/json')
+    if data == None:
+        return Response("bad request",status=500,mimetype='application/json')
+    if not "email" in data:
+        return Response("Information incomplete",status=500,mimetype="application/json")
+         
+    uuid = request.headers.get('authorization')
+    auth = is_session_valid(uuid)
+    if auth == False:
+        return Response('User was not authorized', status=401, mimetype="application/json")
+    else:
+        student = students.find_one({"$and":[{"email":data['email']}, {"address":{"$ne":None}}]})
+        if student:
+            student = {'name':student["name"],'street':student["address"][0]["street"], 'postcode':student["address"][0]["postcode"]}
+            return Response (json.dumps(student, indent=4), status=200, mimetype="application/json")
+        else:
+            return Response("No student with that email and a declared address",status=500,mimetype="application/json")
+````
