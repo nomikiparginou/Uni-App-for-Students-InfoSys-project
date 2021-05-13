@@ -278,3 +278,86 @@ def get_student_address():
         else:
             return Response("No student with that email and a declared address",status=500,mimetype="application/json")
 ````
+## ΕΡΩΤΗΜΑ 7: Διαγραφή φοιτητή βάσει email
+
+> Αυτό το endpoint δέχεται το email ενός μαθητή και τον διαγράφει απο το σύστημα. Εκτελείται απο μια εντολή curl της μορφής:
+````bash
+curl -X DELETE localhost:5000/deleteStudent -d '{"email":"dixiecombs@ontagene.com"}'  -H "Authorization: 5163b7ec-b400-11eb-9257-0800273bc3c2"  -H Content-Type:application/json
+````
+> Αφού ελεγχθεί το input του χρήστη και αυθεντικοποιηθεί και ο ίδιος, αναζητείται στο σύστημα με το query **find_one** σε ποιον χρήστη αντιστοιχεί το email που δώθηκε και το αποτέλεσμα εκχωρείται στη μεταβλητή student. Αν η student είναι κενη, δηλαδή δεν βρέθηκε χρήστης, τότε στη μεταβλητή msg εκχωρειται το ανάλογο μήνυμα αποτυχίας εύρεσης του μαθητή. Αν όμως έχει περιεχόμενα, τότε πριν τη διαγραφή του, κρατάμε το όνομα του στη μεταβλητή name για να τη προσθέσουμε στο msg για το μήνυμα επιτυχίας και στη συνέχεια τον διαγράφουμε με το query **delete_one**. Τέλος, εμφανίζεται στον χρήστη το ανάλογο μήνυμα. 
+
+````python
+@app.route('/deleteStudent', methods=['DELETE'])
+def delete_student():
+    # Request JSON data
+    data = None 
+    try:
+        data = json.loads(request.data)
+    except Exception as e:
+        return Response("bad json content",status=500,mimetype='application/json')
+    if data == None:
+        return Response("bad request",status=500,mimetype='application/json')
+    if not "email" in data:
+        return Response("Information incomplete",status=500,mimetype="application/json")
+
+    uuid = request.headers.get('authorization')
+    auth = is_session_valid(uuid)
+    if auth == False:
+        return Response('User was not authorized', status, mimetype="application/json")
+    else:
+        student = students.find_one({"email":data['email']})
+        if student:
+            msg = "Student "+student['name']+" was deleted from the database."
+            students.delete_one({"email":student['email']})
+            status=200
+        else:
+            email = {"email":data['email']}
+            msg = "No student under the email " +data['data']
+            status=500
+        return Response(msg,status,mimetype="application/json")
+````
+
+## ΕΡΩΤΗΜΑ 8: Εισαγωγή μαθημάτων σε φοιτητή βάσει email 
+
+> Αυτο το endpoint δέχεται ως input ένα email μαθητή και ενα μια λίστα απο courses καθώς και τον βαθμό τους. Εκτελείται με εντολή curl της μορφής:
+````bash
+curl -X PATCH localhost:5000/addCourses -d '{"email":"moongriffin@ontagene.com","courses":[{"Information Systems":5, "XML":7, "DataBases":9, "Probabilities":3, "Multimedia Communications":4}]}' -H "Authorization: 5163b7ec-b400-11eb-9257-0800273bc3c2" -H Content-Type:application/json
+````
+> Αφού ελεχθεί το input του χρήστη και αυθεντικοποιηθεί και ο ίδιος, αναζητείται με το query **find_one** ο χρήστης στον οποίο αντιστοιχεί το email που δώθηκε και επιστρέφεται στην μεταβλητή student. Αν αυτή η μεταβλητή είναι κενή, τότε εμφανίζεται μήνυμα αποτυχίας, ενώ αν δεν είναι κενή, τότε εκτελεί το query **update_one** στον μαθητη αυτον προσθέτοντας του το πεδίο *"courses"* και μέσα σε αύτο τη λίστα με τα μαθήματα που έδωσε ο χρήστης. Τέλος εμφανίζει μήνυμα επιτυχίας της μορφής *"The given courses and their scores were added to database for Moon Griffin "*.
+
+````python
+@app.route('/addCourses', methods=['PATCH'])
+def add_courses():
+    # Request JSON data
+    data = None 
+    try:
+        data = json.loads(request.data)
+    except Exception as e:
+        return Response("bad json content",status=500,mimetype='application/json')
+    if data == None:
+        return Response("bad request",status=500,mimetype='application/json')
+    if not "email" in data or not "courses" in data:
+        return Response("Information incomplete",status=500,mimetype='application/json')
+
+    uuid = request.headers.get('authorization')
+    auth = is_session_valid(uuid)
+    if auth == False:
+        return Response('User was not authorized', status=401, mimetype='application/json')
+    else:
+        student = students.find_one({"email":data['email']})
+        if student:
+            students.update_one({"email":data['email']},{"$set": {"courses":data['courses']}})
+            msg = "The given courses and their scores were added to database for "+student['name']
+            status=200
+        else:
+            msg = "No student with the given email: "+student['email']
+            status=500
+        return Response(msg, status, mimetype='application/json')
+````
+
+## ΕΡΩΤΗΜΑ 9: Επιστροφή περασμένων μαθημάτων φοιτητή βάσει email
+
+> Αυτο το endpoint δέχεται ως input το email ενός μαθητή και επιστρέφει τα περασμένα μαθήματα του, εφόσον υπάρχουν. Εκτελείται με μια εντολή curl της μορφής:
+````bash
+curl -X GET localhost:5000/getPassedCourses -d '{"email":"moongriffin@ontagene.com"}'  -H "Authorization: 5163b7ec-b400-11eb-9257-0800273bc3c2"  -H Content-Type:application/json
+````
