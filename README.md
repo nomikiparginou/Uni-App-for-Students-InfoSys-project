@@ -128,3 +128,56 @@ def get_student():
         else:
             return Response('No user with that email found')
   ````
+## ΕΡΩΤΗΜΑ 4: Επιστροφή όλων των φοιτητών που είναι 30 ετών
+
+> Σε αυτο το endpoint επιστρέφονται όλοι οι students είναι ακριβώς 30 ετών και εκτελείται με εντολή curl της μορφής:
+```` bash
+ curl -X GET localhost:5000/getStudents/thirties -H "Authorization: ebfcbb78-b3f1-11eb-b0d6-0800273bc3c2"  -H Content-Type:application/json
+````
+> Αρχικά αυθεντικοποιεί τον χρήστη με τον ίδιο τρόπο όπως και στο προηγούμενο ερώτημα και μετά την επιτυχής αυθεντικοποιήση του εκτελεί το **find** query στο student collection με argument το *"yearOfBirth"* να ισουται με 1991 (αφού όσοι είναι τώρα 30 έχουν γεννηθεί το 1991). Το αποτέλεσμα του query εκχωρείται στη μεταβλητή studentThirty και στη περίπτωση που δεν είναι κενή, ο κάθε φοιτητής μέσα σε αυτή γίνεται append στη λίστα thirty. Επιπλέον, η τιμή του *_id* του κάθε φοιτητή θέτεται σε **None** και μόλις έχουν περαστεί όλοι οι φοιτητλες στη λίστα thirty, τότε εμφανίζεται στον χρήστη σε μορφή json. Αν τελικά η μεταβλητή students ήταν κενή και δεν βρέθηκαν φοιτηττες της ηλικίας των 30 εμφανίζεται το μήνυμα *"No students at the age of 30"*.
+````json
+[
+    {
+        "_id": null,
+        "name": "Browning Rasmussen",
+        "email": "browningrasmussen@ontagene.com",
+        "yearOfBirth": 1991,
+        "address": [
+            {
+                "street": "Doone Court",
+                "city": "Cuylerville",
+                "postcode": 17331
+            }
+        ]
+    },
+    {
+        "_id": null,
+        "name": "Bennett Baker",
+        "email": "bennettbaker@ontagene.com",
+        "yearOfBirth": 1991,
+        "gender": "male"
+    }
+] 
+````
+
+**Κώδικας**
+````python
+# ΕΡΩΤΗΜΑ 4: Επιστροφή όλων των φοιτητών που είναι 30 ετών
+@app.route('/getStudents/thirties', methods=['GET'])
+def get_students_thirty():
+ 
+    uuid = request.headers.get('authorization')
+    auth = is_session_valid(uuid)
+    if auth == False:
+        return Response('User was not authorized', status=401, mimetype="application/json")
+    else:
+        studentsThirty = students.find({"yearOfBirth": (1991)})
+        thirty = []
+        if studentsThirty :
+            for student in studentsThirty:
+                student['_id'] = None
+                thirty.append(student)
+            return Response (json.dumps(thirty, indent=4))
+        else :
+            return response("No students at the age of 30")  
+ ````
