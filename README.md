@@ -181,3 +181,59 @@ def get_students_thirty():
         else :
             return response("No students at the age of 30")  
  ````
+## ΕΡΩΤΗΜΑ 5: Επιστροφή όλων των φοιτητών που είναι τουλάχιστον 30 ετών
+
+> Σε αυτο το endpoint εμφανιζονται ολοι οι φοιτητές που είναι απο 30 ετών και άνω και εκτελέιται με μια εντολή curl της μορφής:
+````bash
+curl -X GET localhost:5000/getStudents/oldies -H "Authorization: ebfcbb78-b3f1-11eb-b0d6-0800273bc3c2"  -H Content-Type:application/json
+````
+> Στην αρχή αυθεντικοποιείται ο χρηστης ομοίως με τα προηγούμενα ερωτήματα και με την επιτυχή αυθεντικοποιήση του εκτελείται το query **find** στο collection students για όσους μαθητές έχουν *"yearOfBirth*" μικρότερο ή ίσο του 1991. Το αποτέλεσμα επιστρέφεται στη μεταβλητή studentOldies και αν δεν είναι κενή, τότε κάθε μαθητής που βρίσκεται σε αυτό το dictionary γίνεται append στη λίστα **oldies**. Τέλος, εμφανίζεται στον χρήστη το json με τους μαθητές που είναι απο 30 και άνω. Στη περίπτωση που το studentOdlies είναι κενό, δηλαδη δεν βρέθηκα μαθητες των 30 και άνω, τότε εμφανίζεται το μήνυμα *"No students at and over the age of 30"*.
+
+````json
+[
+{
+        "_id": null,
+        "name": "Elba Farley",
+        "email": "elbafarley@ontagene.com",
+        "yearOfBirth": 1981,
+        "gender": "female"
+    },
+    {
+        "_id": null,
+        "name": "Stein Blanchard",
+        "email": "steinblanchard@ontagene.com",
+        "yearOfBirth": 1978,
+        "gender": "male"
+    },
+    {
+        "_id": null,
+        "name": "Gracie Rosales",
+        "email": "gracierosales@ontagene.com",
+        "yearOfBirth": 1982,
+        "gender": "female"
+    },
+
+]
+````
+**Κώδικας**
+````python
+# ΕΡΩΤΗΜΑ 5: Επιστροφή όλων των φοιτητών που είναι τουλάχιστον 30 ετών
+@app.route('/getStudents/oldies', methods=['GET'])
+def get_students_oldies():
+    
+    uuid = request.headers.get('authorization')
+    auth = is_session_valid(uuid)
+    if auth == False:
+        return Response('User was not authorized', status=401, mimetype="application/json")
+    else:
+        studentsOldies = students.find({"yearOfBirth":{ "$lt": 1991 }})
+        oldies = []
+        if studentsOldies:
+            for student in studentsOldies:
+                student['_id'] = None
+                oldies.append(student)
+            return Response (json.dumps(oldies, indent=4), status=200, mimetype="application/json")
+        else:
+            return response("No students at and over the age of 30")        
+````
+
