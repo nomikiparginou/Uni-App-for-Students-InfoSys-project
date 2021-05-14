@@ -361,3 +361,52 @@ def add_courses():
 ````bash
 curl -X GET localhost:5000/getPassedCourses -d '{"email":"moongriffin@ontagene.com"}'  -H "Authorization: 5163b7ec-b400-11eb-9257-0800273bc3c2"  -H Content-Type:application/json
 ````
+> Μετά τον ελέγχο του input και την επιτυχής αυθεντικοποίηση του χρήστη, εκτελείται το query **find_one** για την αναζήτη του φοιτητή στον οποίο αντιστοιχεί το email που δώθηκε και εκχωρείται το αποτέλεσμα στην μεταβλητή *student*. Γίνεται έλεγχος για το περιεχόμενο της μεταβλητής και άν είναι κενή, τότε επιστρέφεται το μήνυμα *"No student with the given email"*. Αλλιώς, ελέγχει εάν το πεδίο **courses** συμπεριλαμβάνεται μέσα στη μεταβλητη με τις πληροφορίες του φοιτητή και αν δεν υπάρχει τότε εμφανίζει το μήνυμα *"Student has no courses"*. Αν όμως υπάρχει η πληροφορία για τα μαθήματα του, τότε περνάει στη μεταβλητή *courseList* το dictionary με τα courses του. Στη συνέχεια προσπελάυνει όλα τα στοιχεία αυτού του dictionary και τα values τους και ελέγχει άν το value του κάθε course, δηλαδή ο βαθμός του, είναι απο 5 και πάνω. Όποιο μάθημα πληρεί αυτή τη προϋπόθεση μπαίνει στη λίστα **passed**. Τέλος, μετα απο αυτή τη διαδικασία, ελέγχεται εάν η λίστα passed έχει καθόλου περιεχόμενα. Αν είναι άδεια τότε εμφανίζει το μήνυμα *"Sudent (name) has not passed any courses"*, ενω στην άλλη περίτπωση εμφανίζει τα μαθήματα που έχει περάσει ο μαθητής. 
+````json
+{
+    "Information Systems": 5,
+    "XML": 7,
+    "DataBases": 9
+}  
+````
+
+**Κώδικας**
+````python
+@app.route('/getPassedCourses', methods=['GET'])
+def get_courses():
+    # Request JSON data
+    data = None 
+    try:
+        data = json.loads(request.data)
+    except Exception as e:
+        return Response("bad json content",status=500,mimetype='application/json')
+    if data == None:
+        return Response("bad request",status=500,mimetype='application/json')
+    if not "email" in data:
+        return Response("Information incomplete",status=500,mimetype="application/json")
+
+    uuid = request.headers.get('authorization')
+    auth = is_session_valid(uuid)
+    if auth == False:
+        return Response('User was not authorized', status=401, mimetype='application/json')
+    else:
+        student = students.find_one({"email":data['email']})
+        if student:
+            student['_id'] = None
+            if "courses" not in student:
+                return Response("Student has no courses")
+            else:
+                passed = {}
+                courseList = {"courses":student['courses']}
+                for item in courseList.values():
+                    for course in item:
+                        for score in course:
+                            if course.get(score) >= 5:
+                                passed[score] = course.get(score)
+                if len(passed) == 0:
+                    return Response("Student "+student['name']+" has not passed any courses.", status=200, mimetype='application/json')
+                else:
+                    return Response(json.dumps(passed, indent=4), status=200, mimetype='application/json')
+        else:
+            return Response("No student with the given email: "+data['email'], status=500, mimetype='application/json')
+  ````
