@@ -13,7 +13,6 @@
 >  
 **Κώδικας**
 ```` python
-# ΕΡΩΤΗΜΑ 1: Δημιουργία χρήστη
 @app.route('/createUser', methods=['POST'])
 def create_user():
     # Request JSON data
@@ -41,7 +40,7 @@ def create_user():
 curl -X POST localhost:5000/login -d '{"username":"nomikipar","password":"7253738"}' -H Content-Type:application/json
 
 ````
-> Όπως και στο παραπάνω ερώτημα ελέχγονται τα στοιχεία που έχουν δωθεί για input. Στη συνέχεια, εκτελείται το query *"find_one"* με argument το username που έδωσε ο χρηστης, με σκοπό να ελεχθεί εάν υπάρχει στη βάση χρήστης με το username που δώθηκε και το αποτέλεσμα εκχωρείται στη μεταβλητή user. Άν η μεταβλητή user είναι άδεια, δηλαδή δεν βρέθηκε χρήστης με αυτό το username, τότε εμφανίζεται το μήνυμα *"No user found with that username"*. Αν ο χρήστης υπάρχει στο σύστημα, τότε ελέγχεται εάν ο κωδικός που αντιστοιχεί σε αυτόν τον χρήστη είναι ο ίδιος με αυτόν που εδωσε ο χρηστης ως input. Άν δεν ταυτίζονται εμφανιζεται το μήνυμα *"Wrong username or password."*, ενώ αν ταυτίζονται καλείται η συνάρτηση create_session με argument το username και μας επιστρέφεται πίσω το uuid. Στη συνεχεια δημιουργείται η μεταβλητή **res** στη οποία εκχωρείται το uuid που πήραμε, καθώς και το username του χρήστη και μετά εκτυπώνοται σε μορφή:
+> Όπως και στο παραπάνω ερώτημα ελέχγονται τα στοιχεία που έχουν δωθεί για input. Στη συνέχεια, εκτελείται το query *"find_one"* με argument το username που έδωσε ο χρηστης, με σκοπό να ελεχθεί εάν υπάρχει στη βάση χρήστης με το username που δώθηκε και το αποτέλεσμα εκχωρείται στη μεταβλητή *user*. Άν η μεταβλητή *user* είναι άδεια, δηλαδή δεν βρέθηκε χρήστης με αυτό το username, τότε εμφανίζεται το μήνυμα *"No user found with that username"*. Αν ο χρήστης υπάρχει στο σύστημα, τότε ελέγχεται εάν ο κωδικός που αντιστοιχεί σε αυτόν τον χρήστη είναι ο ίδιος με αυτόν που εδωσε ο χρηστης ως input. Άν δεν ταυτίζονται εμφανιζεται το μήνυμα *"Wrong username or password."*, ενώ αν ταυτίζονται καλείται η συνάρτηση create_session με argument το username και μας επιστρέφεται πίσω το uuid. Στη συνεχεια δημιουργείται η μεταβλητή **res** στη οποία εκχωρείται το uuid που πήραμε, καθώς και το username του χρήστη και μετά εκτυπώνοται σε μορφή:
 ````json
 {
     "uuid": "c6c65dea-b3ed-11eb-8545-0800273bc3c2",
@@ -51,7 +50,6 @@ curl -X POST localhost:5000/login -d '{"username":"nomikipar","password":"725373
 
 **Κώδικας**
 ````python
-# ΕΡΩΤΗΜΑ 2: Login στο σύστημα
 @app.route('/login', methods=['POST'])
 def login():
     # Request JSON data
@@ -102,7 +100,6 @@ curl -X GET localhost:5000/getStudent -d '{"email":"mcgowanrobinson@ontagene.com
 **Κώδικας**
 
 ```` python
-# ΕΡΩΤΗΜΑ 3: Επιστροφή φοιτητή βάσει email
 @app.route('/getStudent', methods=['GET'])
 def get_student():
     # Request JSON data
@@ -162,7 +159,6 @@ def get_student():
 
 **Κώδικας**
 ````python
-# ΕΡΩΤΗΜΑ 4: Επιστροφή όλων των φοιτητών που είναι 30 ετών
 @app.route('/getStudents/thirties', methods=['GET'])
 def get_students_thirty():
  
@@ -217,7 +213,6 @@ curl -X GET localhost:5000/getStudents/oldies -H "Authorization: ebfcbb78-b3f1-1
 ````
 **Κώδικας**
 ````python
-# ΕΡΩΤΗΜΑ 5: Επιστροφή όλων των φοιτητών που είναι τουλάχιστον 30 ετών
 @app.route('/getStudents/oldies', methods=['GET'])
 def get_students_oldies():
     
